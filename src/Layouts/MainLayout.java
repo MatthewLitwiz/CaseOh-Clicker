@@ -7,14 +7,11 @@ import javax.swing.JTabbedPane;
 
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.Label;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import Utilities.ImageClicker;
 import Utilities.LabelClickable;
 
-public class MainLayout extends JPanel implements ActionListener{
+public class MainLayout extends JPanel{
 
     ImageClicker imageClicker = new ImageClicker();
     LabelClickable labelClickable = new LabelClickable();
@@ -25,7 +22,8 @@ public class MainLayout extends JPanel implements ActionListener{
 
     private boolean x2ClicksActive = false;
 
-    JLabel counterLabel;
+    JPanel upgrades, currentPerks,idleMiner;
+    JLabel counterLabel, shopLabel, x2Clicks;
 
     public MainLayout() {
         setLayout(null);
@@ -34,17 +32,17 @@ public class MainLayout extends JPanel implements ActionListener{
         Shoptabs.setBounds(250, 60, 900, 400);
 
         // tabs
-        JPanel upgrades = new JPanel();
-        upgrades.setLayout(null);
+        upgrades = new JPanel();
+        upgrades.setLayout(new javax.swing.BoxLayout(upgrades, javax.swing.BoxLayout.Y_AXIS));
 
         Shoptabs.addTab("Upgrade", upgrades);
 
-        JPanel currentPerks = new JPanel();
-        currentPerks.setLayout(null);
+        currentPerks = new JPanel();
+        currentPerks.setLayout(new javax.swing.BoxLayout(currentPerks, javax.swing.BoxLayout.Y_AXIS));
         Shoptabs.addTab("Perks", currentPerks);
 
-        JPanel idleMiner = new JPanel();
-        idleMiner.setLayout(null);
+        idleMiner = new JPanel();
+        idleMiner.setLayout(new javax.swing.BoxLayout(idleMiner, javax.swing.BoxLayout.Y_AXIS));
         Shoptabs.addTab("Idle Miner", idleMiner);
 
 
@@ -65,9 +63,9 @@ public class MainLayout extends JPanel implements ActionListener{
         });
         
 
-        // shop system 
+        // shop 
 
-        JLabel shopLabel = new JLabel();
+        shopLabel = new JLabel();
         shopLabel.setBounds(250, 0, 400, 50);
         shopLabel.setText("Shop:");
         shopLabel.setFont(new Font("Tahoma", Font.BOLD, 40));
@@ -75,8 +73,7 @@ public class MainLayout extends JPanel implements ActionListener{
 
         // buy x2 clicks
 
-        JLabel x2Clicks = new JLabel(); 
-        x2Clicks.setBounds(5, 0, 400, 50);
+        x2Clicks = new JLabel(); 
         x2Clicks.setText("Buy x2 Clicks - 100 clicks");
         x2Clicks.setFont(new Font("Arial", Font.BOLD, 15));
         x2Clicks.setForeground(Color.BLACK);
@@ -88,17 +85,28 @@ public class MainLayout extends JPanel implements ActionListener{
                     JOptionPane.showMessageDialog(null, "You already have x2 clicks active!");
                 }
 
+
                 count -= 100;
-
                 x2ClicksActive = true;
+        
+                // Add x2Clicks to currentPerks
+                upgrades.remove(x2Clicks);
+                JLabel x2ClicksActive = new JLabel();
+                x2ClicksActive.setText("x2Clicks ACTIVE");
+                x2ClicksActive.setFont(new Font("Arial", Font.BOLD, 15));
+                x2ClicksActive.setForeground(Color.GREEN);
 
+                upgrades.revalidate();
+                upgrades.repaint();
+                currentPerks.add(x2ClicksActive);
+                currentPerks.revalidate();
+                currentPerks.repaint();
+        
                 counterLabel.setText("Count: " + count);
                 JOptionPane.showMessageDialog(null, "You bought x2 clicks!");
-
+        
+                // Strike-through text
                 x2Clicks.setText("<html><s>Buy x2 Clicks - 100 clicks</s></html>");
-
-
-
             } else if (x2ClicksActive) {
                 JOptionPane.showMessageDialog(null, "You already have x2 clicks active!");
             } else {
@@ -106,22 +114,11 @@ public class MainLayout extends JPanel implements ActionListener{
             }
         });
 
-        upgrades.revalidate();
-        upgrades.repaint();
         add(Shoptabs);
         upgrades.add(x2Clicks);
         add(shopLabel);
         add(imageClicker);
         add(counterLabel);
-
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-
-        // add listener for x2 clicks
-
-        String key = e.getActionCommand();
 
     }
 
