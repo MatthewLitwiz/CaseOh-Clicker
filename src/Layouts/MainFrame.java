@@ -9,7 +9,7 @@ public class MainFrame extends JFrame {
 
     public MainFrame() {
         setTitle("CaseOh Clicker");
-        setSize(600, 800);
+        setSize(900, 800);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(false);
