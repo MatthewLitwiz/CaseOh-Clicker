@@ -26,9 +26,10 @@ public class MainLayout extends JPanel {
 
     private int ClicksPurchased = 0; // Number of Clicks Items purchased
     private int BurgerPurchased = 0; // Number of Burgers purchased
+    private double cps = 0; // tracks clicks per second
 
     JPanel upgrades, currentPerks, items;
-    JLabel counterLabel, Bakery, x2Clicks, x3Clicks, clicksItemLabel, burgerItemLabel;
+    JLabel counterLabel, Bakery, x2Clicks, x3Clicks, clicksItemLabel, burgerItemLabel, cpsLabel;
 
     public MainLayout() {
         setLayout(null);
@@ -67,6 +68,11 @@ public class MainLayout extends JPanel {
             counterLabel.setText("Count: " + count);
         });
 
+        // set upgrades to empty if empty
+        if (upgrades.getComponentCount() == 0) {
+            upgrades.add(new JLabel("No upgrades available"));
+        }
+
         // shop Name
 
         Bakery = new JLabel();
@@ -97,7 +103,9 @@ public class MainLayout extends JPanel {
             if (count >= 100) {
                 count -= 100;
                 ClicksPurchased++;
+                cps += 0.1;
                 counterLabel.setText("Count: " + count);
+                cpsLabel.setText(String.format("CPS: %.1f", cps)); // Format CPS to 2 decimal places
                 clicksItemLabel.setText("Buy Clicks Item (0.1 cps) - 100 clicks | Total: " + ClicksPurchased);
                 ClicksTimer();
             } else {
@@ -106,16 +114,18 @@ public class MainLayout extends JPanel {
         });
 
         burgerItemLabel = new JLabel();
-        burgerItemLabel.setText("Buy Burger Item (1 cps) - 500 clicks");
+        burgerItemLabel.setText("Buy Burger Item (1 cps) - 1000 clicks");
         burgerItemLabel.setFont(new Font("Arial", Font.BOLD, 15));
         burgerItemLabel.setForeground(Color.BLACK);
 
         LabelClickable.makeLabelClickable(burgerItemLabel, () -> {
-            if (count >= 500) {
-                count -= 500;
+            if (count >= 1000) {
+                count -= 1000;
                 BurgerPurchased++;
+                cps += 1;
                 counterLabel.setText("Count: " + count);
-                burgerItemLabel.setText("Buy Burger Item (1 cps) - 500 clicks | Total: " + BurgerPurchased);
+                cpsLabel.setText(String.format("CPS: %.1f", cps)); // Format CPS to 2 decimal places
+                burgerItemLabel.setText("Buy Burger Item (1 cps) - 1000 clicks | Total: " + BurgerPurchased);
                 BurgerTimer();
             } else {
                 JOptionPane.showMessageDialog(null, "You don't have enough clicks!");
@@ -182,7 +192,13 @@ public class MainLayout extends JPanel {
             }
         });
 
+        // clicks per second display 
+        cpsLabel = new JLabel();
+        cpsLabel.setBounds(200, 150, 200, 50);
+        cpsLabel.setText("CPS: " + cps);
+        cpsLabel.setFont(cpsLabel.getFont().deriveFont(20.0f));
 
+        add(cpsLabel);
         add(Shoptabs);
         upgrades.add(x2Clicks);
         upgrades.add(x3Clicks);
@@ -193,6 +209,7 @@ public class MainLayout extends JPanel {
         add(counterLabel);
 
     }
+
 
     public void BurgerTimer(){
         Timer BurgerTimer = new Timer(1000, new ActionListener() {
