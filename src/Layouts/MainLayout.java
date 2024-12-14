@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -65,10 +66,12 @@ public class MainLayout extends JPanel {
     private double cps = 0; // tracks clicks per second
 
     private JLabel incomeActiveLabel;
+    private int incomeMultiplier = 1;  // Default multiplier (1 for no boost)
 
     // buffs
     JLabel x2income, x2incomeActiveLabel, x4income, x4incomeActiveLabel;
-    boolean x2incomeActive = false;
+    private boolean x2incomeActive = false;
+    private boolean x4incomeActive = false;
     private JLabel x3ClicksActiveLabel;
 
     private JLabel x2ClicksActiveLabel, x4ClicksActiveLabel, x6ClicksActiveLabel, x10ClicksActiveLabel, x12ClicksActiveLabel, x15ClicksActiveLabel, 
@@ -158,109 +161,226 @@ public class MainLayout extends JPanel {
         x2Clicks.setText("Buy x2 Clicks - 100 clicks");
         x2Clicks.setFont(new Font("Arial", Font.BOLD, 15));
         x2Clicks.setForeground(Color.GRAY);
-        TwoTimesClicks();
+        setupUpgrade(
+            x2Clicks,               // The clickable label
+            100,                    // Cost of the upgrade
+            null,                   // No prerequisite label
+            "x2Clicks",             // Name of the upgrade
+            false,                  // No prerequisite active flag
+            null,                   // No prerequisite field name
+            "x2ClicksActive",       // Upgrade field name
+            null                    // Additional logic, if any
+        );
 
         // buy x3 clicks
         x3Clicks = new JLabel();
         x3Clicks.setText("Buy x3 Clicks - 2,000 clicks");
         x3Clicks.setFont(new Font("Arial", Font.BOLD, 15));
         x3Clicks.setForeground(Color.GRAY);
-        ThreeTimesClicks();
+        setupUpgrade(
+            x3Clicks,               // The clickable label
+            2000,                   // Cost of the upgrade
+            x2ClicksActiveLabel,    // Prerequisite label
+            "x3Clicks",             // Name of the upgrade
+            x2ClicksActive,         // Prerequisite active flag
+            "x2ClicksActive",       // Prerequisite field name
+            "x3ClicksActive",       // Upgrade field name
+            null                    // Additional logic, if any
+        );
 
         // 4x clicks
         x4Clicks = new JLabel();
         x4Clicks.setText("Buy x4 Clicks - 5,000 clicks");
         x4Clicks.setFont(new Font("Arial", Font.BOLD, 15));
         x4Clicks.setForeground(Color.GRAY);
-        FourTimesClicks();
+        setupUpgrade(
+            x4Clicks,               // The clickable label
+            5000,                   // Cost of the upgrade
+            x3ClicksActiveLabel,    // Prerequisite label
+            "x4Clicks",             // Name of the upgrade
+            x3ClicksActive,         // Prerequisite active flag
+            "x3ClicksActive",       // Prerequisite field name
+            "x4ClickActive",        // Upgrade field name
+            null                    // Additional logic, if any
+        );
 
         // 6x clicks
         x6Clicks = new JLabel();
         x6Clicks.setText("Buy x6 Clicks - 10,000 clicks");
         x6Clicks.setFont(new Font("Arial", Font.BOLD, 15));
         x6Clicks.setForeground(Color.GRAY);
-        SixTimesClicks();
+        setupUpgrade(
+            x6Clicks,               // The clickable label
+            10000,                  // Cost of the upgrade
+            x4ClicksActiveLabel,    // Prerequisite label
+            "x6Clicks",             // Name of the upgrade
+            x4ClickActive,          // Prerequisite active flag
+            "x4ClickActive",        // Prerequisite field name
+            "x6ClickActive",        // Upgrade field name
+            null                    // Additional logic, if any
+        );
 
         // 10x clicks
         x10Clicks = new JLabel();
         x10Clicks.setText("Buy x10 Clicks - 50,000 clicks");
         x10Clicks.setFont(new Font("Arial", Font.BOLD, 15));
         x10Clicks.setForeground(Color.GRAY);
-        TenTimesClicks();
+        setupUpgrade(
+            x10Clicks,               // The clickable label
+            50000,                   // Cost of the upgrade
+            x6ClicksActiveLabel,     // Prerequisite label
+            "x10Clicks",             // Name of the upgrade
+            x6ClickActive,           // Prerequisite active flag
+            "x6ClickActive",         // Prerequisite field name
+            "x10ClickActive",        // Upgrade field name
+            null                     // Additional logic, if any
+        );
 
         // 12x clicks
         x12Clicks = new JLabel();
         x12Clicks.setText("Buy x12 Clicks - 100,000 clicks");
         x12Clicks.setFont(new Font("Arial", Font.BOLD, 15));
         x12Clicks.setForeground(Color.GRAY);
-        TwelveTimesClicks();
+        setupUpgrade(
+            x12Clicks,               // The clickable label
+            100000,                  // Cost of the upgrade
+            x10ClicksActiveLabel,    // Prerequisite label
+            "x12Clicks",             // Name of the upgrade
+            x10ClickActive,          // Prerequisite active flag
+            "x10ClickActive",        // Prerequisite field name
+            "x12ClickActive",        // Upgrade field name
+            null                     // Additional logic, if any
+        );
 
         // 15x clicks
         x15Clicks = new JLabel();
         x15Clicks.setText("Buy x15 Clicks - 500,000 clicks");
         x15Clicks.setFont(new Font("Arial", Font.BOLD, 15));
         x15Clicks.setForeground(Color.GRAY);
-        FifteenTimesClicks();
+        setupUpgrade(
+            x15Clicks,               // The clickable label
+            500000,                  // Cost of the upgrade
+            x12ClicksActiveLabel,    // Prerequisite label
+            "x15Clicks",             // Name of the upgrade
+            x12ClickActive,          // Prerequisite active flag
+            "x12ClickActive",        // Prerequisite field name
+            "x15ClickActive",        // Upgrade field name
+            null                     // Additional logic, if any
+        );
 
         // 20x clicks
         x20Clicks = new JLabel();
         x20Clicks.setText("Buy x20 Clicks - 1,000,000 clicks");
         x20Clicks.setFont(new Font("Arial", Font.BOLD, 15));
         x20Clicks.setForeground(Color.GRAY);
-        TwentyTimesClicks();
+        setupUpgrade(
+            x20Clicks,               // The clickable label
+            1000000,                 // Cost of the upgrade
+            x15ClicksActiveLabel,    // Prerequisite label
+            "x20Clicks",             // Name of the upgrade
+            x15ClickActive,          // Prerequisite active flag
+            "x15ClickActive",        // Prerequisite field name
+            "x20ClickActive",        // Upgrade field name
+            null                     // Additional logic, if any
+        );
 
         // 25x clicks
         x25Clicks = new JLabel();
         x25Clicks.setText("Buy x25 Clicks - 5,000,000 clicks");
         x25Clicks.setFont(new Font("Arial", Font.BOLD, 15));
         x25Clicks.setForeground(Color.GRAY);
-        TwentyFiveTimesClicks();
+        setupUpgrade(
+            x25Clicks,               // The clickable label
+            5000000,                 // Cost of the upgrade
+            x20ClicksActiveLabel,    // Prerequisite label
+            "x25Clicks",             // Name of the upgrade
+            x20ClickActive,          // Prerequisite active flag
+            "x20ClickActive",        // Prerequisite field name
+            "x25ClickActive",        // Upgrade field name
+            null                     // Additional logic, if any
+        );
 
         // 30x clicks
         x30Clicks = new JLabel();
         x30Clicks.setText("Buy x30 Clicks - 10,000,000 clicks");
         x30Clicks.setFont(new Font("Arial", Font.BOLD, 15));
         x30Clicks.setForeground(Color.GRAY);
-        ThirtyTimesClicks();
+        setupUpgrade(
+            x30Clicks,               // The clickable label
+            10000000,                // Cost of the upgrade
+            x25ClicksActiveLabel,    // Prerequisite label
+            "x30Clicks",             // Name of the upgrade
+            x25ClickActive,          // Prerequisite active flag
+            "x25ClickActive",        // Prerequisite field name
+            "x30ClickActive",        // Upgrade field name
+            null                     // Additional logic, if any
+        );
 
         // 40x clicks
         x40Clicks = new JLabel();
         x40Clicks.setText("Buy x40 Clicks - 50,000,000 clicks");
         x40Clicks.setFont(new Font("Arial", Font.BOLD, 15));
         x40Clicks.setForeground(Color.GRAY);
-        FortyTimesClicks();
+        setupUpgrade(
+            x40Clicks,               // The clickable label
+            50000000,                // Cost of the upgrade
+            x30ClicksActiveLabel,    // Prerequisite label
+            "x40Clicks",             // Name of the upgrade
+            x30ClickActive,          // Prerequisite active flag
+            "x30ClickActive",        // Prerequisite field name
+            "x40ClickActive",        // Upgrade field name
+            null                     // Additional logic, if any
+        );
 
         // 50x clicks
         x50Clicks = new JLabel();
         x50Clicks.setText("Buy x50 Clicks - 100,000,000 clicks");
         x50Clicks.setFont(new Font("Arial", Font.BOLD, 15));
         x50Clicks.setForeground(Color.GRAY);
-        FiftyTimesClicks();
+        setupUpgrade(
+            x50Clicks,               // The clickable label
+            100000000,               // Cost of the upgrade
+            x40ClicksActiveLabel,    // Prerequisite label
+            "x50Clicks",             // Name of the upgrade
+            x40ClickActive,          // Prerequisite active flag
+            "x40ClickActive",        // Prerequisite field name
+            "x50ClickActive",        // Upgrade field name
+            null                     // Additional logic, if any
+        );
 
         // 100x clicks
         x100Clicks = new JLabel();
         x100Clicks.setText("Buy x100 Clicks - 500,000,000 clicks");
         x100Clicks.setFont(new Font("Arial", Font.BOLD, 15));
         x100Clicks.setForeground(Color.GRAY);
-        HundredTimesClicks();
+        setupUpgrade(
+            x100Clicks,               // The clickable label
+            500000000,                // Cost of the upgrade
+            x50ClicksActiveLabel,     // Prerequisite label
+            "x100Clicks",             // Name of the upgrade
+            x50ClickActive,           // Prerequisite active flag
+            "x50ClickActive",         // Prerequisite field name
+            "x100ClickActive",        // Upgrade field name
+            null                      // Additional logic, if any
+        );
 
         // Clicks Click
 
         clicksItemLabel = new JLabel();
-        clicksItemLabel.setText("Buy Clicks Item (0.1 cps) - 100 clicks");
+        clicksItemLabel.setText("Buy Clicks Item (1 cps) - 100 clicks");
         clicksItemLabel.setFont(new Font("Arial", Font.BOLD, 15));
         clicksItemLabel.setForeground(Color.GRAY);
 
-        setupFoodItem(clicksItemLabel, 100, 0.1, "Clicks", 1); // Arguments: label, cost, baseCPS, itemName, cpsMultiplier
+        setupFoodItem(clicksItemLabel, 100, 1, "Clicks", 1); // Arguments: label, cost, baseCPS, itemName, cpsMultiplier
 
         // Burger Clicks
 
         burgerItemLabel = new JLabel();
-        burgerItemLabel.setText("Buy Burger Item (1 cps) - 1,000 clicks");
+        burgerItemLabel.setText("Buy Burger Item (3 cps) - 1,000 clicks");
         burgerItemLabel.setFont(new Font("Arial", Font.BOLD, 15));
         burgerItemLabel.setForeground(Color.GRAY);
 
-        setupFoodItem(burgerItemLabel, 1000, 1, "Burger", 1);  // base CPS = 1, cost = 1000
+        setupFoodItem(burgerItemLabel, 1000, 3, "Burger", 1);  // base CPS = 1, cost = 1000
 
         // buy pizza item
 
@@ -311,15 +431,14 @@ public class MainLayout extends JPanel {
         x2income.setFont(new Font("Arial", Font.BOLD, 15));
         x2income.setForeground(Color.RED);
 
-        buyIncomeMultiplier(x2income, 2, 500000, "x2");  // Multiplier is 2 (double), cost is 500,000
+        buyIncomeMultiplier(x2income, 2, 500000, "x2", () -> true); // Always true because x2 has no prerequisite
 
         x4income = new JLabel();
         x4income.setText("x4 income - 1,000,000 clicks");
         x4income.setFont(new Font("Arial", Font.BOLD, 15));
         x4income.setForeground(Color.RED);
 
-        buyIncomeMultiplier(x4income, 4, 1000000, "x4");  // Multiplier is 4 (quadruple), cost is 1,000,000
-
+        buyIncomeMultiplier(x4income, 4, 1000000, "x4", () -> x2incomeActive);
 
         // clicks per second display
         cpsLabel = new JLabel();
@@ -468,21 +587,12 @@ public class MainLayout extends JPanel {
                     MegaBuffetPurchased++;
                 }
     
-                // Check if double income is active, then adjust CPS accordingly
-                double finalCPS = baseCPS * cpsMultiplier;
-                if (x2incomeActive) {
-                    finalCPS *= 2; // Double the CPS if income boost is active
-                }
+                // Recalculate CPS for all items after the new purchase
+                updateCPSForAllPurchases();
     
-                // Update CPS
-                cps += finalCPS;
-    
-                // Update the UI labels
+                // Update UI labels
                 counterLabel.setText("Count: " + String.format("%,d", count));
-                cpsLabel.setText(String.format("CPS: %.1f", cps)); // Format CPS to 1 decimal place
                 itemLabel.setText("Buy " + itemName + " (" + baseCPS + " cps) - " + itemCost + " clicks | Total: " + getPurchasedCount(itemName));
-    
-                // Call the timer to start the CPS accumulation
                 startItemTimer(baseCPS, cpsMultiplier);
             } else {
                 JOptionPane.showMessageDialog(null, "You don't have enough clicks!");
@@ -492,10 +602,7 @@ public class MainLayout extends JPanel {
     
     private void startItemTimer(double baseCPS, int cpsMultiplier) {
         Timer itemTimer = new Timer(1000, (ActionEvent e) -> {
-            double cpsIncrement = baseCPS * cpsMultiplier;
-            if (x2incomeActive) {
-                cpsIncrement *= 2; // Double the CPS if income boost is active
-            }
+            double cpsIncrement = baseCPS * cpsMultiplier * incomeMultiplier;
             count += cpsIncrement;
             counterLabel.setText("Count: " + String.format("%,d", count));
         });
@@ -523,191 +630,33 @@ public class MainLayout extends JPanel {
         }
     }
 
-    
-    private void HundredTimesClicks() {
-        setupUpgrade(
-            x100Clicks,               // The clickable label
-            500000000,                // Cost of the upgrade
-            x50ClicksActiveLabel,     // Prerequisite label
-            "x100Clicks",             // Name of the upgrade
-            x50ClickActive,           // Prerequisite active flag
-            "x50ClickActive",         // Prerequisite field name
-            "x100ClickActive",        // Upgrade field name
-            null                      // Additional logic, if any
-        );
-    }
-    
-    private void FiftyTimesClicks() {
-        setupUpgrade(
-            x50Clicks,               // The clickable label
-            100000000,               // Cost of the upgrade
-            x40ClicksActiveLabel,    // Prerequisite label
-            "x50Clicks",             // Name of the upgrade
-            x40ClickActive,          // Prerequisite active flag
-            "x40ClickActive",        // Prerequisite field name
-            "x50ClickActive",        // Upgrade field name
-            null                     // Additional logic, if any
-        );
-    }
-    
-    private void FortyTimesClicks() {
-        setupUpgrade(
-            x40Clicks,               // The clickable label
-            50000000,                // Cost of the upgrade
-            x30ClicksActiveLabel,    // Prerequisite label
-            "x40Clicks",             // Name of the upgrade
-            x30ClickActive,          // Prerequisite active flag
-            "x30ClickActive",        // Prerequisite field name
-            "x40ClickActive",        // Upgrade field name
-            null                     // Additional logic, if any
-        );
-    }
-    
-    private void ThirtyTimesClicks() {
-        setupUpgrade(
-            x30Clicks,               // The clickable label
-            10000000,                // Cost of the upgrade
-            x25ClicksActiveLabel,    // Prerequisite label
-            "x30Clicks",             // Name of the upgrade
-            x25ClickActive,          // Prerequisite active flag
-            "x25ClickActive",        // Prerequisite field name
-            "x30ClickActive",        // Upgrade field name
-            null                     // Additional logic, if any
-        );
-    }
-    
-    private void TwentyFiveTimesClicks() {
-        setupUpgrade(
-            x25Clicks,               // The clickable label
-            5000000,                 // Cost of the upgrade
-            x20ClicksActiveLabel,    // Prerequisite label
-            "x25Clicks",             // Name of the upgrade
-            x20ClickActive,          // Prerequisite active flag
-            "x20ClickActive",        // Prerequisite field name
-            "x25ClickActive",        // Upgrade field name
-            null                     // Additional logic, if any
-        );
-    }
-    
-    private void TwentyTimesClicks() {
-        setupUpgrade(
-            x20Clicks,               // The clickable label
-            1000000,                 // Cost of the upgrade
-            x15ClicksActiveLabel,    // Prerequisite label
-            "x20Clicks",             // Name of the upgrade
-            x15ClickActive,          // Prerequisite active flag
-            "x15ClickActive",        // Prerequisite field name
-            "x20ClickActive",        // Upgrade field name
-            null                     // Additional logic, if any
-        );
-    }
-    
-    private void FifteenTimesClicks() {
-        setupUpgrade(
-            x15Clicks,               // The clickable label
-            500000,                  // Cost of the upgrade
-            x12ClicksActiveLabel,    // Prerequisite label
-            "x15Clicks",             // Name of the upgrade
-            x12ClickActive,          // Prerequisite active flag
-            "x12ClickActive",        // Prerequisite field name
-            "x15ClickActive",        // Upgrade field name
-            null                     // Additional logic, if any
-        );
-    }
-    
-    private void TwelveTimesClicks() {
-        setupUpgrade(
-            x12Clicks,               // The clickable label
-            100000,                  // Cost of the upgrade
-            x10ClicksActiveLabel,    // Prerequisite label
-            "x12Clicks",             // Name of the upgrade
-            x10ClickActive,          // Prerequisite active flag
-            "x10ClickActive",        // Prerequisite field name
-            "x12ClickActive",        // Upgrade field name
-            null                     // Additional logic, if any
-        );
-    }
-    
-    private void TenTimesClicks() {
-        setupUpgrade(
-            x10Clicks,               // The clickable label
-            50000,                   // Cost of the upgrade
-            x6ClicksActiveLabel,     // Prerequisite label
-            "x10Clicks",             // Name of the upgrade
-            x6ClickActive,           // Prerequisite active flag
-            "x6ClickActive",         // Prerequisite field name
-            "x10ClickActive",        // Upgrade field name
-            null                     // Additional logic, if any
-        );
-    }
-    
-    private void SixTimesClicks() {
-        setupUpgrade(
-            x6Clicks,               // The clickable label
-            10000,                  // Cost of the upgrade
-            x4ClicksActiveLabel,    // Prerequisite label
-            "x6Clicks",             // Name of the upgrade
-            x4ClickActive,          // Prerequisite active flag
-            "x4ClickActive",        // Prerequisite field name
-            "x6ClickActive",        // Upgrade field name
-            null                    // Additional logic, if any
-        );
-    }
-    
-    private void FourTimesClicks() {
-        setupUpgrade(
-            x4Clicks,               // The clickable label
-            5000,                   // Cost of the upgrade
-            x3ClicksActiveLabel,    // Prerequisite label
-            "x4Clicks",             // Name of the upgrade
-            x3ClicksActive,         // Prerequisite active flag
-            "x3ClicksActive",       // Prerequisite field name
-            "x4ClickActive",        // Upgrade field name
-            null                    // Additional logic, if any
-        );
-    }
-    
-    private void ThreeTimesClicks() {
-        setupUpgrade(
-            x3Clicks,               // The clickable label
-            2000,                   // Cost of the upgrade
-            x2ClicksActiveLabel,    // Prerequisite label
-            "x3Clicks",             // Name of the upgrade
-            x2ClicksActive,         // Prerequisite active flag
-            "x2ClicksActive",       // Prerequisite field name
-            "x3ClicksActive",       // Upgrade field name
-            null                    // Additional logic, if any
-        );
-    }
-    
-    private void TwoTimesClicks() {
-        setupUpgrade(
-            x2Clicks,               // The clickable label
-            100,                    // Cost of the upgrade
-            null,                   // No prerequisite label
-            "x2Clicks",             // Name of the upgrade
-            false,                  // No prerequisite active flag
-            null,                   // No prerequisite field name
-            "x2ClicksActive",       // Upgrade field name
-            null                    // Additional logic, if any
-        );
-    }
-    
-
-    private boolean incomeActive = false;  // To track if income multiplier is active
-    private int incomeMultiplier = 1;  // Default multiplier (1 for no boost)
-    
-    private void buyIncomeMultiplier(JLabel incomeLabel, int multiplier, int cost, String multiplierText) {
+    private void buyIncomeMultiplier(JLabel incomeLabel, int multiplier, int cost, String multiplierText, Supplier<Boolean> prerequisiteSupplier) {
         LabelClickable.makeLabelClickable(incomeLabel, () -> {
-            if (count >= cost && !incomeActive) {
-                count -= cost;
-                incomeActive = true;
+            // Dynamically check the prerequisite condition
+            if (!prerequisiteSupplier.get()) {
+                JOptionPane.showMessageDialog(null, "You must buy the lower multiplier first!");
+                return;
+            }
+    
+            // Check if the user has enough clicks and isn't buying a lower multiplier than already active
+            if (count >= cost && incomeMultiplier < multiplier) {
+                count -= cost;  // Deduct the cost
                 incomeMultiplier = multiplier;  // Set the new multiplier
+    
+                // Activate the current multiplier
+                if (multiplier == 2) {
+                    x2incomeActive = true;
+                } else if (multiplier == 4) {
+                    x4incomeActive = true;
+                } else {
+                    JOptionPane.showMessageDialog(null, "Invalid multiplier!");
+                    return;
+                }
     
                 // Remove the old multiplier item
                 upgrades.remove(incomeLabel);
     
-                // Call the method to update the active label outside the lambda
+                // Update the active multiplier label
                 createIncomeActiveLabel(multiplierText);
     
                 items.revalidate();
@@ -716,13 +665,16 @@ public class MainLayout extends JPanel {
                 counterLabel.setText("Count: " + String.format("%,d", count));
                 JOptionPane.showMessageDialog(null, "You bought " + multiplierText + " income!");
     
-                // Recalculate CPS for all items
+                // Recalculate CPS for all items with the new multiplier
                 updateCPSForAllPurchases();
             } else {
-                JOptionPane.showMessageDialog(null, "You don't have enough clicks!");
+                JOptionPane.showMessageDialog(null, "You don't have enough clicks or already have a higher multiplier!");
             }
         });
     }
+    
+    
+    
 
     private void createIncomeActiveLabel(String multiplierText) {
         // Create and update the incomeActiveLabel here
@@ -734,51 +686,21 @@ public class MainLayout extends JPanel {
     }
     
     private void updateCPSForAllPurchases() {
-        // Recalculate CPS for each item based on the active multiplier
-        updateItemCPS("Clicks", 0.1, 1);  // Example CPS for "Clicks" with no multiplier
-        updateItemCPS("Burger", 0.2, 1);
-        updateItemCPS("Pizza", 0.3, 1);
-        updateItemCPS("Taco Truck", 0.4, 1);
-        updateItemCPS("Donut Factory", 0.5, 1);
-        updateItemCPS("Fried Chicken", 0.6, 1);
-        updateItemCPS("Mega Buffet", 0.7, 1);
+        cps = 0; // Reset CPS before recalculating
+        updateItemCPS("Clicks", 1, 1);
+        updateItemCPS("Burger", 3, 1);
+        updateItemCPS("Pizza", 5, 1);
+        updateItemCPS("Taco Truck", 10, 1);
+        updateItemCPS("Donut Factory", 20, 1);
+        updateItemCPS("Fried Chicken", 50, 1);
+        updateItemCPS("Mega Buffet", 100, 1);
     }
     
     private void updateItemCPS(String itemName, double baseCPS, int cpsMultiplier) {
-        // Update CPS for all items considering the active multiplier
-        double finalCPS = baseCPS * cpsMultiplier * incomeMultiplier;  // Apply the global income multiplier
-    
-        // Apply multiplier for specific items
-        switch (itemName) {
-            case "Clicks":
-                cps += finalCPS;
-                break;
-            case "Burger":
-                cps += finalCPS;
-                break;
-            case "Pizza":
-                cps += finalCPS;
-                break;
-            case "Taco Truck":
-                cps += finalCPS;
-                break;
-            case "Donut Factory":
-                cps += finalCPS;
-                break;
-            case "Fried Chicken":
-                cps += finalCPS;
-                break;
-            case "Mega Buffet":
-                cps += finalCPS;
-                break;
-            default:
-                break;
-        }
-    
-        // Update the UI
-        cpsLabel.setText(String.format("CPS: %.1f", cps));  // Format CPS to 1 decimal place
+        int purchasedCount = getPurchasedCount(itemName); // Get total items purchased
+        double finalCPS = baseCPS * cpsMultiplier * incomeMultiplier * purchasedCount; // Apply multiplier
+        cps += finalCPS; // Accumulate total CPS
+        cpsLabel.setText(String.format("CPS: %.1f", cps)); // Update UI
     }
     
-    
-
 }
