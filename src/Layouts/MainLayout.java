@@ -1,19 +1,14 @@
 package Layouts;
 
-import Utilities.ImageClicker;
-import Utilities.LabelClickable;
+import Util.AudioPlayer;
+import Util.ImageClicker;
+import Util.IncomeMultiplierHandler;
+import Util.ItemHandlerClass;
+import Util.LabelClickable;
+import Util.UpgradeHandler;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -22,12 +17,19 @@ import javax.swing.Timer;
 
 public class MainLayout extends JPanel {
 
-    ImageClicker imageClicker = new ImageClicker();
+    // imports variables from other classes
+
+    private ImageClicker imageClicker = new ImageClicker();
+    private UpgradeHandler upgradeHandler = new UpgradeHandler(this);
+    private ItemHandlerClass itemHandler;
+    private IncomeMultiplierHandler incomeMultiplierHandler;
+
+    private static final String audioPath = "src/Audio/BackgroundMusic.wav";
+    private static final String punchSoundPath = "src/Audio/punch.wav";
 
     private final JTabbedPane Shoptabs;
 
-    private int count = 700000000;
-    private double temp = 0.0;
+    private int count = 2000000;
 
     private boolean x2ClicksActive = false;
     private boolean x3ClicksActive = false;
@@ -52,33 +54,26 @@ public class MainLayout extends JPanel {
     // item shop Labels
     JLabel clicksItemLabel, burgerItemLabel, cpsLabel, pizzaLabel, tacoTruckLabel, DonutFactoryLabel, FriedChickenLabel, MegaBuffetLabel;
 
-    // all the foods
-    private Map<String, Integer> foodPurchases = new HashMap<>();
-
-    // number of items purchased
-    private int ClicksPurchased = 0; // Number of Clicks Items purchased
-    private int BurgerPurchased = 0; // Number of Burgers purchased
-    private int PizzaPurchased = 0; // Number of Pizzas purchased
-    private int TacoTruckPurchased = 0; // Number of Taco Trucks purchased
-    private int DonutFactoryPurchased = 0; // Number of Donut Factories purchased
-    private int FriedChickenPurchased = 0; // Number of Fried Chickens purchased
-    private int MegaBuffetPurchased = 0; // Number of Mega Buffets purchased
     private double cps = 0; // tracks clicks per second
 
     private JLabel incomeActiveLabel;
-    private int incomeMultiplier = 1;  // Default multiplier (1 for no boost)
 
     // buffs
-    JLabel x2income, x2incomeActiveLabel, x4income, x4incomeActiveLabel;
-    private boolean x2incomeActive = false;
-    private boolean x4incomeActive = false;
+    JLabel x2income,  x4income;
+
     private JLabel x3ClicksActiveLabel;
 
+    private final String CaseOhFace = "src/Images/CaseOhFace.jpg";
+
     private JLabel x2ClicksActiveLabel, x4ClicksActiveLabel, x6ClicksActiveLabel, x10ClicksActiveLabel, x12ClicksActiveLabel, x15ClicksActiveLabel, 
-                    x20ClicksActiveLabel, x25ClicksActiveLabel, x30ClicksActiveLabel, x40ClicksActiveLabel, x50ClicksActiveLabel, x100ClicksActiveLabel;
+                    x20ClicksActiveLabel, x25ClicksActiveLabel, x30ClicksActiveLabel, x40ClicksActiveLabel, x50ClicksActiveLabel;
 
     public MainLayout() {
         setLayout(null);
+
+        AudioPlayer.playAudioLoop(audioPath);
+
+        incomeMultiplierHandler = new IncomeMultiplierHandler(this);
 
         Shoptabs = new JTabbedPane();
         Shoptabs.setBounds(1300, 100, 600, 900);
@@ -105,8 +100,20 @@ public class MainLayout extends JPanel {
         counterLabel.setText("Count: " + count);
         counterLabel.setFont(counterLabel.getFont().deriveFont(20.0f));
 
-        // MAIN counting logic
-        imageClicker.ClickableImage("src/Images/CaseOhFace.jpg", 450, 700, 50, 200, () -> {
+        // clicks per second display
+        cpsLabel = new JLabel();
+        cpsLabel.setBounds(200, 150, 200, 50);
+        cpsLabel.setText("CPS: " + cps);
+        cpsLabel.setFont(cpsLabel.getFont().deriveFont(20.0f));
+
+        itemHandler = new ItemHandlerClass(this, incomeMultiplierHandler);
+
+        logoChangerTimer();
+
+        imageClicker.ClickableImage(CaseOhFace, 450, 700, 50, 200, () -> {
+            AudioPlayer.playSoundOnceAsync(punchSoundPath);
+
+            // Increase count based on boost
             if (x100ClickActive) {
                 count += 100;
             } else if (x50ClickActive) {
@@ -136,7 +143,8 @@ public class MainLayout extends JPanel {
             } else {
                 count++; // No boosts active
             }
-            // Update UI or perform other actions if necessary
+
+            // Update UI
             counterLabel.setText("Count: " + String.format("%,d", count));
         });
         
@@ -161,7 +169,7 @@ public class MainLayout extends JPanel {
         x2Clicks.setText("Buy x2 Clicks - 100 clicks");
         x2Clicks.setFont(new Font("Arial", Font.BOLD, 15));
         x2Clicks.setForeground(Color.GRAY);
-        setupUpgrade(
+        upgradeHandler.setupUpgrade(
             x2Clicks,               // The clickable label
             100,                    // Cost of the upgrade
             null,                   // No prerequisite label
@@ -177,7 +185,7 @@ public class MainLayout extends JPanel {
         x3Clicks.setText("Buy x3 Clicks - 2,000 clicks");
         x3Clicks.setFont(new Font("Arial", Font.BOLD, 15));
         x3Clicks.setForeground(Color.GRAY);
-        setupUpgrade(
+        upgradeHandler.setupUpgrade(
             x3Clicks,               // The clickable label
             2000,                   // Cost of the upgrade
             x2ClicksActiveLabel,    // Prerequisite label
@@ -193,7 +201,7 @@ public class MainLayout extends JPanel {
         x4Clicks.setText("Buy x4 Clicks - 5,000 clicks");
         x4Clicks.setFont(new Font("Arial", Font.BOLD, 15));
         x4Clicks.setForeground(Color.GRAY);
-        setupUpgrade(
+        upgradeHandler.setupUpgrade(
             x4Clicks,               // The clickable label
             5000,                   // Cost of the upgrade
             x3ClicksActiveLabel,    // Prerequisite label
@@ -209,7 +217,7 @@ public class MainLayout extends JPanel {
         x6Clicks.setText("Buy x6 Clicks - 10,000 clicks");
         x6Clicks.setFont(new Font("Arial", Font.BOLD, 15));
         x6Clicks.setForeground(Color.GRAY);
-        setupUpgrade(
+        upgradeHandler.setupUpgrade(
             x6Clicks,               // The clickable label
             10000,                  // Cost of the upgrade
             x4ClicksActiveLabel,    // Prerequisite label
@@ -225,7 +233,7 @@ public class MainLayout extends JPanel {
         x10Clicks.setText("Buy x10 Clicks - 50,000 clicks");
         x10Clicks.setFont(new Font("Arial", Font.BOLD, 15));
         x10Clicks.setForeground(Color.GRAY);
-        setupUpgrade(
+        upgradeHandler.setupUpgrade(
             x10Clicks,               // The clickable label
             50000,                   // Cost of the upgrade
             x6ClicksActiveLabel,     // Prerequisite label
@@ -241,7 +249,7 @@ public class MainLayout extends JPanel {
         x12Clicks.setText("Buy x12 Clicks - 100,000 clicks");
         x12Clicks.setFont(new Font("Arial", Font.BOLD, 15));
         x12Clicks.setForeground(Color.GRAY);
-        setupUpgrade(
+        upgradeHandler.setupUpgrade(
             x12Clicks,               // The clickable label
             100000,                  // Cost of the upgrade
             x10ClicksActiveLabel,    // Prerequisite label
@@ -257,7 +265,7 @@ public class MainLayout extends JPanel {
         x15Clicks.setText("Buy x15 Clicks - 500,000 clicks");
         x15Clicks.setFont(new Font("Arial", Font.BOLD, 15));
         x15Clicks.setForeground(Color.GRAY);
-        setupUpgrade(
+        upgradeHandler.setupUpgrade(
             x15Clicks,               // The clickable label
             500000,                  // Cost of the upgrade
             x12ClicksActiveLabel,    // Prerequisite label
@@ -273,7 +281,7 @@ public class MainLayout extends JPanel {
         x20Clicks.setText("Buy x20 Clicks - 1,000,000 clicks");
         x20Clicks.setFont(new Font("Arial", Font.BOLD, 15));
         x20Clicks.setForeground(Color.GRAY);
-        setupUpgrade(
+        upgradeHandler.setupUpgrade(
             x20Clicks,               // The clickable label
             1000000,                 // Cost of the upgrade
             x15ClicksActiveLabel,    // Prerequisite label
@@ -289,7 +297,7 @@ public class MainLayout extends JPanel {
         x25Clicks.setText("Buy x25 Clicks - 5,000,000 clicks");
         x25Clicks.setFont(new Font("Arial", Font.BOLD, 15));
         x25Clicks.setForeground(Color.GRAY);
-        setupUpgrade(
+        upgradeHandler.setupUpgrade(
             x25Clicks,               // The clickable label
             5000000,                 // Cost of the upgrade
             x20ClicksActiveLabel,    // Prerequisite label
@@ -305,7 +313,7 @@ public class MainLayout extends JPanel {
         x30Clicks.setText("Buy x30 Clicks - 10,000,000 clicks");
         x30Clicks.setFont(new Font("Arial", Font.BOLD, 15));
         x30Clicks.setForeground(Color.GRAY);
-        setupUpgrade(
+        upgradeHandler.setupUpgrade(
             x30Clicks,               // The clickable label
             10000000,                // Cost of the upgrade
             x25ClicksActiveLabel,    // Prerequisite label
@@ -321,7 +329,7 @@ public class MainLayout extends JPanel {
         x40Clicks.setText("Buy x40 Clicks - 50,000,000 clicks");
         x40Clicks.setFont(new Font("Arial", Font.BOLD, 15));
         x40Clicks.setForeground(Color.GRAY);
-        setupUpgrade(
+        upgradeHandler.setupUpgrade(
             x40Clicks,               // The clickable label
             50000000,                // Cost of the upgrade
             x30ClicksActiveLabel,    // Prerequisite label
@@ -337,7 +345,7 @@ public class MainLayout extends JPanel {
         x50Clicks.setText("Buy x50 Clicks - 100,000,000 clicks");
         x50Clicks.setFont(new Font("Arial", Font.BOLD, 15));
         x50Clicks.setForeground(Color.GRAY);
-        setupUpgrade(
+        upgradeHandler.setupUpgrade(
             x50Clicks,               // The clickable label
             100000000,               // Cost of the upgrade
             x40ClicksActiveLabel,    // Prerequisite label
@@ -353,43 +361,46 @@ public class MainLayout extends JPanel {
         x100Clicks.setText("Buy x100 Clicks - 500,000,000 clicks");
         x100Clicks.setFont(new Font("Arial", Font.BOLD, 15));
         x100Clicks.setForeground(Color.GRAY);
-        setupUpgrade(
-            x100Clicks,               // The clickable label
-            500000000,                // Cost of the upgrade
-            x50ClicksActiveLabel,     // Prerequisite label
-            "x100Clicks",             // Name of the upgrade
-            x50ClickActive,           // Prerequisite active flag
-            "x50ClickActive",         // Prerequisite field name
-            "x100ClickActive",        // Upgrade field name
-            null                      // Additional logic, if any
-        );
+
+        // Assuming 'upgradeHandler' is instantiated from MainLayout
+        upgradeHandler.setupUpgrade(
+            x100Clicks,                // The clickable label
+            500000000,                 // Cost of the upgrade
+            x50ClicksActiveLabel,      // Prerequisite label
+            "x100Clicks",              // Name of the upgrade
+            x50ClickActive,            // Prerequisite active flag
+        "x50ClickActive",          // Prerequisite field name
+        "x100ClickActive",         // Upgrade field name
+        null                       // Additional logic, if any
+);
+
 
         // Clicks Click
 
         clicksItemLabel = new JLabel();
-        clicksItemLabel.setText("Buy Clicks Item (1 cps) - 100 clicks");
+        clicksItemLabel.setText("Buy Clicks (1 cps) - 100 clicks");
         clicksItemLabel.setFont(new Font("Arial", Font.BOLD, 15));
         clicksItemLabel.setForeground(Color.GRAY);
 
-        setupFoodItem(clicksItemLabel, 100, 1, "Clicks", 1); // Arguments: label, cost, baseCPS, itemName, cpsMultiplier
+        itemHandler.setupFoodItem(clicksItemLabel, 100, 1, "Clicks", 1); // Arguments: label, cost, baseCPS, itemName, cpsMultiplier
 
         // Burger Clicks
 
         burgerItemLabel = new JLabel();
-        burgerItemLabel.setText("Buy Burger Item (3 cps) - 1,000 clicks");
+        burgerItemLabel.setText("Buy Burger (3 cps) - 1,000 clicks");
         burgerItemLabel.setFont(new Font("Arial", Font.BOLD, 15));
         burgerItemLabel.setForeground(Color.GRAY);
 
-        setupFoodItem(burgerItemLabel, 1000, 3, "Burger", 1);  // base CPS = 1, cost = 1000
+        itemHandler.setupFoodItem(burgerItemLabel, 1000, 3, "Burger", 1);  // base CPS = 1, cost = 1000
 
         // buy pizza item
 
         pizzaLabel = new JLabel();
-        pizzaLabel.setText("Buy Pizza Item (5 cps) - 5,000 clicks");
+        pizzaLabel.setText("Buy Pizza (5 cps) - 5,000 clicks");
         pizzaLabel.setFont(new Font("Arial", Font.BOLD, 15));
         pizzaLabel.setForeground(Color.GRAY);
 
-        setupFoodItem(pizzaLabel, 5000, 5, "Pizza", 1);  // base CPS = 5, cost = 5000
+        itemHandler.setupFoodItem(pizzaLabel, 5000, 5, "Pizza", 1);  // base CPS = 5, cost = 5000
 
 
         tacoTruckLabel = new JLabel();
@@ -397,7 +408,7 @@ public class MainLayout extends JPanel {
         tacoTruckLabel.setFont(new Font("Arial", Font.BOLD, 15));
         tacoTruckLabel.setForeground(Color.GRAY);
 
-        setupFoodItem(tacoTruckLabel, 10000, 10, "Taco Truck", 1);  // base CPS = 10, cost = 10000
+        itemHandler.setupFoodItem(tacoTruckLabel, 10000, 10, "Taco Truck", 1);  // base CPS = 10, cost = 10000
 
 
         DonutFactoryLabel = new JLabel();
@@ -405,7 +416,7 @@ public class MainLayout extends JPanel {
         DonutFactoryLabel.setFont(new Font("Arial", Font.BOLD, 15));
         DonutFactoryLabel.setForeground(Color.GRAY);
 
-        setupFoodItem(DonutFactoryLabel, 50000, 20, "Donut Factory", 1);  // base CPS = 20, cost = 50000
+        itemHandler.setupFoodItem(DonutFactoryLabel, 50000, 20, "Donut Factory", 1);  // base CPS = 20, cost = 50000
 
 
         FriedChickenLabel = new JLabel();
@@ -413,7 +424,7 @@ public class MainLayout extends JPanel {
         FriedChickenLabel.setFont(new Font("Arial", Font.BOLD, 15));
         FriedChickenLabel.setForeground(Color.GRAY);
 
-        setupFoodItem(FriedChickenLabel, 200000, 50, "Fried Chicken", 1);  // base CPS = 50, cost = 200000
+        itemHandler.setupFoodItem(FriedChickenLabel, 200000, 50, "Fried Chicken", 1);  // base CPS = 50, cost = 200000
 
 
         MegaBuffetLabel = new JLabel();
@@ -421,7 +432,7 @@ public class MainLayout extends JPanel {
         MegaBuffetLabel.setFont(new Font("Arial", Font.BOLD, 15));
         MegaBuffetLabel.setForeground(Color.GRAY);
 
-        setupFoodItem(MegaBuffetLabel, 1000000, 100, "Mega Buffet", 1);  // base CPS = 100, cost = 1000000
+        itemHandler.setupFoodItem(MegaBuffetLabel, 1000000, 100, "Mega Buffet", 1);
 
 
         // buffs
@@ -431,21 +442,15 @@ public class MainLayout extends JPanel {
         x2income.setFont(new Font("Arial", Font.BOLD, 15));
         x2income.setForeground(Color.RED);
 
-        buyIncomeMultiplier(x2income, 2, 500000, "x2", () -> true); // Always true because x2 has no prerequisite
+        incomeMultiplierHandler.buyIncomeMultiplier(x2income, 2, 500000, "x2", () -> true); // No prerequisite for x2
 
         x4income = new JLabel();
         x4income.setText("x4 income - 1,000,000 clicks");
         x4income.setFont(new Font("Arial", Font.BOLD, 15));
         x4income.setForeground(Color.RED);
 
-        buyIncomeMultiplier(x4income, 4, 1000000, "x4", () -> x2incomeActive);
+        incomeMultiplierHandler.buyIncomeMultiplier(x4income, 4, 1000000, "x4", () -> incomeMultiplierHandler.getIncomeMultiplier() >= 2);
 
-        // clicks per second display
-        cpsLabel = new JLabel();
-        cpsLabel.setBounds(200, 150, 200, 50);
-        cpsLabel.setText("CPS: " + cps);
-        cpsLabel.setFont(cpsLabel.getFont().deriveFont(20.0f));
-        
         AddEverything();
     }
 
@@ -479,27 +484,43 @@ public class MainLayout extends JPanel {
         add(counterLabel);
     }
 
-    public void startGameLoop() {
-        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    public JPanel getItemsPanel() {
+        return items;
+    }
+    
 
-        Runnable gameLoopTask = () -> {
-            updateGameLogic();
-            renderGame();
-        };
-
-        // Schedule the task to run at a fixed rate (every 16.67 ms for 60 FPS)
-        scheduler.scheduleAtFixedRate(gameLoopTask, 0, 16, TimeUnit.MILLISECONDS);
+    public int getCount() {
+        return count;
     }
 
-    // Method for updating the game logic
-    public void updateGameLogic() {
-
+    public void updateCount(int newCount) {
+        this.count = newCount;
+        counterLabel.setText("Count: " + String.format("%,d", count));
+        counterLabel.revalidate();
+        counterLabel.repaint();
+    }
+    public JLabel getCounterLabel() {
+        return counterLabel;
     }
 
-    // Method for rendering the game state
-    public void renderGame() {
-
+    public JLabel getCpsLabel() {
+        return cpsLabel;
     }
+
+    public void updateCounterLabel(int currentCount) {
+        counterLabel.setText("Count: " + String.format("%,d", currentCount));
+        counterLabel.revalidate();
+        counterLabel.repaint();
+    }
+    
+    public void removeUpgradeLabel(JLabel label) {
+        upgrades.remove(label);
+    }
+    
+    public void addNewUpgradeLabel(JLabel label) {
+        currentPerks.add(label);
+    }
+    
 
     // change the name of shop
 
@@ -517,175 +538,67 @@ public class MainLayout extends JPanel {
         });
     }
 
-    private void setupUpgrade(
-        JLabel clickableLabel,
-        int cost,
-        JLabel prerequisiteLabel,
-        String upgradeName,
-        boolean prerequisiteActive,
-        String prerequisiteFieldName,
-        String upgradeFieldName,
-        Runnable additionalLogic
-    ) {
-        clickableLabel.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                try {
-                    // Check if prerequisiteFieldName is set
-                    if (prerequisiteFieldName != null) {
-                        // Verify prerequisite field is active
-                        Field prereqField = MainLayout.class.getDeclaredField(prerequisiteFieldName);
-                        prereqField.setAccessible(true);
-    
-                        boolean prereqActive = prereqField.getBoolean(MainLayout.this);
-                        if (!prereqActive) {
-                            JOptionPane.showMessageDialog(null, "Cannot unlock " + upgradeName + " without buying " + prerequisiteFieldName);
-                            return;
-                        }
-                    }
-    
-                    // Set upgrade field to active
-                    Field upgradeField = MainLayout.class.getDeclaredField(upgradeFieldName);
-                    upgradeField.setAccessible(true);
-                    upgradeField.setBoolean(MainLayout.this, true);
-    
-                    // Execute additional logic if provided
-                    if (additionalLogic != null) {
-                        additionalLogic.run();
-                    }
-    
-                    // Deduct cost or perform additional operations
-                    System.out.println(upgradeName + " successfully unlocked!");
-    
-                } catch (NoSuchFieldException | IllegalAccessException ex) {
-                    System.err.println("Error accessing fields: prerequisiteFieldName=" + prerequisiteFieldName
-                            + ", upgradeFieldName=" + upgradeFieldName);
-                }
-            }
+    public final void logoChangerTimer() {
+        Timer logoChanger = new Timer(1000, (ActionEvent e) -> {
+            int currentCount = getCount(); // Get the current count from MainLayout
+            updateLabelColor(clicksItemLabel, 100, currentCount);
+            updateLabelColor(burgerItemLabel, 1000, currentCount);
+            updateLabelColor(pizzaLabel, 5000, currentCount);
+            updateLabelColor(tacoTruckLabel, 10000, currentCount);
+            updateLabelColor(DonutFactoryLabel, 50000, currentCount);
+            updateLabelColor(FriedChickenLabel, 200000, currentCount);
+            updateLabelColor(MegaBuffetLabel, 1000000, currentCount);
+            updateLabelColor(x2Clicks, 100, currentCount);
+            updateLabelColor(x3Clicks, 2000, currentCount);
+            updateLabelColor(x4Clicks, 5000, currentCount);
+            updateLabelColor(x6Clicks, 10000, currentCount);
+            updateLabelColor(x10Clicks, 50000, currentCount);
+            updateLabelColor(x12Clicks, 100000, currentCount);
+            updateLabelColor(x15Clicks, 500000, currentCount);
+            updateLabelColor(x20Clicks, 1000000, currentCount);
+            updateLabelColor(x25Clicks, 5000000, currentCount);
+            updateLabelColor(x30Clicks, 10000000, currentCount);
+            updateLabelColor(x40Clicks, 50000000, currentCount);
+            updateLabelColor(x50Clicks, 100000000, currentCount);
+            updateLabelColor(x100Clicks, 500000000, currentCount);
         });
+        logoChanger.start();
     }
-
-    private void setupFoodItem(JLabel itemLabel, int itemCost, double baseCPS, String itemName, int cpsMultiplier) {
-        LabelClickable.makeLabelClickable(itemLabel, () -> {
-            if (count >= itemCost) {
-                count -= itemCost;  // Deduct the cost
     
-                // Increment the purchase count
-                if (itemName.equals("Clicks")) {
-                    ClicksPurchased++;
-                } else if (itemName.equals("Burger")) {
-                    BurgerPurchased++;
-                } else if (itemName.equals("Pizza")) {
-                    PizzaPurchased++;
-                } else if (itemName.equals("Taco Truck")) {
-                    TacoTruckPurchased++;
-                } else if (itemName.equals("Donut Factory")) {
-                    DonutFactoryPurchased++;
-                } else if (itemName.equals("Fried Chicken")) {
-                    FriedChickenPurchased++;
-                } else if (itemName.equals("Mega Buffet")) {
-                    MegaBuffetPurchased++;
-                }
     
-                // Recalculate CPS for all items after the new purchase
-                updateCPSForAllPurchases();
-    
-                // Update UI labels
-                counterLabel.setText("Count: " + String.format("%,d", count));
-                itemLabel.setText("Buy " + itemName + " (" + baseCPS + " cps) - " + itemCost + " clicks | Total: " + getPurchasedCount(itemName));
-                startItemTimer(baseCPS, cpsMultiplier);
+    private void updateLabelColor(JLabel label, int threshold, int currentCount) {
+        if (label != null) {
+            if (currentCount >= threshold) {
+                label.setForeground(Color.GREEN);  // Change to GREEN if count is above threshold
             } else {
-                JOptionPane.showMessageDialog(null, "You don't have enough clicks!");
+                label.setForeground(Color.GRAY);   // Otherwise, change to GRAY
             }
-        });
+        }
     }
     
-    private void startItemTimer(double baseCPS, int cpsMultiplier) {
-        Timer itemTimer = new Timer(1000, (ActionEvent e) -> {
-            double cpsIncrement = baseCPS * cpsMultiplier * incomeMultiplier;
-            count += cpsIncrement;
-            counterLabel.setText("Count: " + String.format("%,d", count));
-        });
-        itemTimer.start();
-    }
-    
+
     private int getPurchasedCount(String itemName) {
         switch (itemName) {
             case "Clicks":
-                return ClicksPurchased;
+                return itemHandler.getClicksPurchased();
             case "Burger":
-                return BurgerPurchased;
+                return itemHandler.getBurgerPurchased();
             case "Pizza":
-                return PizzaPurchased;
+                return itemHandler.getPizzaPurchased();
             case "Taco Truck":
-                return TacoTruckPurchased;
+                return itemHandler.getTacoTruckPurchased();
             case "Donut Factory":
-                return DonutFactoryPurchased;
+                return itemHandler.getDonutFactoryPurchased();
             case "Fried Chicken":
-                return FriedChickenPurchased;
+                return itemHandler.getFriedChickenPurchased();
             case "Mega Buffet":
-                return MegaBuffetPurchased;
+                return itemHandler.getMegaBuffetPurchased();
             default:
                 return 0;
         }
     }
-
-    private void buyIncomeMultiplier(JLabel incomeLabel, int multiplier, int cost, String multiplierText, Supplier<Boolean> prerequisiteSupplier) {
-        LabelClickable.makeLabelClickable(incomeLabel, () -> {
-            // Dynamically check the prerequisite condition
-            if (!prerequisiteSupplier.get()) {
-                JOptionPane.showMessageDialog(null, "You must buy the lower multiplier first!");
-                return;
-            }
     
-            // Check if the user has enough clicks and isn't buying a lower multiplier than already active
-            if (count >= cost && incomeMultiplier < multiplier) {
-                count -= cost;  // Deduct the cost
-                incomeMultiplier = multiplier;  // Set the new multiplier
-    
-                // Activate the current multiplier
-                if (multiplier == 2) {
-                    x2incomeActive = true;
-                } else if (multiplier == 4) {
-                    x4incomeActive = true;
-                } else {
-                    JOptionPane.showMessageDialog(null, "Invalid multiplier!");
-                    return;
-                }
-    
-                // Remove the old multiplier item
-                upgrades.remove(incomeLabel);
-    
-                // Update the active multiplier label
-                createIncomeActiveLabel(multiplierText);
-    
-                items.revalidate();
-                items.repaint();
-    
-                counterLabel.setText("Count: " + String.format("%,d", count));
-                JOptionPane.showMessageDialog(null, "You bought " + multiplierText + " income!");
-    
-                // Recalculate CPS for all items with the new multiplier
-                updateCPSForAllPurchases();
-            } else {
-                JOptionPane.showMessageDialog(null, "You don't have enough clicks or already have a higher multiplier!");
-            }
-        });
-    }
-    
-    
-    
-
-    private void createIncomeActiveLabel(String multiplierText) {
-        // Create and update the incomeActiveLabel here
-        incomeActiveLabel = new JLabel();
-        incomeActiveLabel.setText("[" + multiplierText + " income ACTIVE]");
-        incomeActiveLabel.setFont(new Font("Arial", Font.BOLD, 15));
-        incomeActiveLabel.setForeground(Color.GREEN);
-        currentPerks.add(incomeActiveLabel);
-    }
-    
-    private void updateCPSForAllPurchases() {
+    public void updateCPSForAllPurchases() {
         cps = 0; // Reset CPS before recalculating
         updateItemCPS("Clicks", 1, 1);
         updateItemCPS("Burger", 3, 1);
@@ -698,9 +611,10 @@ public class MainLayout extends JPanel {
     
     private void updateItemCPS(String itemName, double baseCPS, int cpsMultiplier) {
         int purchasedCount = getPurchasedCount(itemName); // Get total items purchased
-        double finalCPS = baseCPS * cpsMultiplier * incomeMultiplier * purchasedCount; // Apply multiplier
+        double finalCPS = baseCPS * cpsMultiplier * incomeMultiplierHandler.getIncomeMultiplier() * purchasedCount; // Use MainLayout's multiplier
         cps += finalCPS; // Accumulate total CPS
-        cpsLabel.setText(String.format("CPS: %.1f", cps)); // Update UI
+        cpsLabel.setText(String.format("CPS: %.1f", cps)); // Update the CPS UI
     }
+    
     
 }
